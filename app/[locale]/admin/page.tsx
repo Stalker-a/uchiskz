@@ -27,7 +27,7 @@ export default async function AdminPage() {
   }
 
   // Если ID не совпадает с Админом — выкидываем на главную
-  if (userId !== process.env.ADMIN_ID) {
+  if (userId !== "user_36huiyWyu7re6JWPtpwFf7VI6is") { 
     redirect("/");
   }
 
