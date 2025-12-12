@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
+// 👇 1. НОВЫЕ ИМПОРТЫ ДЛЯ ЗАЩИТЫ
+import { auth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+
 // Импортируем серверные действия (Actions)
 import { createSubject } from "@/app/actions/createSubject";
 import { createTopic } from "@/app/actions/createTopic";
@@ -14,6 +18,20 @@ import { deleteTask } from "@/app/actions/deleteTask";
 import MathText from "@/components/MathText";
 
 export default async function AdminPage() {
+  // 👇 2. ЛОГИКА ЗАЩИТЫ (Вставляем в самое начало)
+  const { userId } = auth();
+
+  // Если не вошел — отправляем на вход
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  // Если ID не совпадает с Админом — выкидываем на главную
+  if (userId !== process.env.ADMIN_ID) {
+    redirect("/");
+  }
+
+  // 👇 ДАЛЬШЕ ТВОЙ СТАРЫЙ КОД (без изменений)
   // 1. Получаем данные из базы
   const subjects = await db.subject.findMany({ 
     orderBy: { id: 'asc' },
@@ -28,7 +46,7 @@ export default async function AdminPage() {
   const tasks = await db.task.findMany({
     orderBy: { id: "desc" },
     include: { topic: { include: { subject: true } } },
-    take: 50 // Ограничим вывод 50 последними задачами, чтобы админка не тормозила
+    take: 50 // Ограничим вывод 50 последними задачами
   });
 
   return (
@@ -46,7 +64,7 @@ export default async function AdminPage() {
       </div>
 
       <h1 className="text-3xl font-extrabold text-slate-800 mb-8 text-center uppercase tracking-wide">
-        Панель Управления
+        Панель Управления 🛡️
       </h1>
 
       {/* --- СЕТКА ИЗ 3 КОЛОНОК --- */}
