@@ -19,7 +19,7 @@ import MathText from "@/components/MathText";
 
 export default async function AdminPage() {
   // 👇 2. ЛОГИКА ЗАЩИТЫ (Вставляем в самое начало)
-  const { userId } = auth();
+  const { userId } = await auth();
 
   // Если не вошел — отправляем на вход
   if (!userId) {
