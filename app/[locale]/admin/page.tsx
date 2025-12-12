@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 // 👇 1. НОВЫЕ ИМПОРТЫ ДЛЯ ЗАЩИТЫ
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server"; // ✅ NEW
 import { redirect } from "next/navigation";
 
 // Импортируем серверные действия (Actions)
