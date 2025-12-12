@@ -21,7 +21,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const percentage = questions > 0 ? Math.round((score / questions) * 100) : 0;
 
   // Найдем название темы, чтобы было красиво
-  const topic = topicId ? await db.topic.findUnique({ where: { id: parseInt(topicId) } }) : null;
+  // ✅ ПРАВИЛЬНО (без parseInt)
+const topic = topicId ? await db.topic.findUnique({ where: { id: topicId } }) : null;
 
   // Оценка смайликом
   let emoji = "🤔";
@@ -65,7 +66,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
           </Link>
           {topicId && (
             <Link 
-               href={`/tasks/${await db.task.findFirst({ where: { topicId: parseInt(topicId) } }).then(t => t?.id)}`}
+               href={`/tasks/${await db.task.findFirst({ where: { topicId: topicId } }).then(t => t?.id)}`}
                className="block w-full bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 transition"
             >
               Пройти заново 🔄
