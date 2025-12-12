@@ -1,0 +1,67 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Или "sqlite", если ты используешь локальный файл
+  url      = env("DATABASE_URL")
+}
+
+// 1. ПРЕДМЕТЫ (Математика, Физика...)
+model Subject {
+  id        String   @id @default(cuid())
+  slug      String   @unique // Ссылка, например "math"
+  titleRu   String
+  titleKz   String
+  
+  // Связь: Один предмет -> Много тем
+  // onDelete: Cascade означает: удалишь Предмет -> удалятся все Темы
+  topics    Topic[] 
+}
+
+// 2. ТЕМЫ (Квадратные уравнения, Динамика...)
+model Topic {
+  id        String   @id @default(cuid())
+  titleRu   String
+  titleKz   String
+  grade     Int      @default(11) // Класс
+
+  subjectId String
+  // Связь с предметом + Каскадное удаление
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  // Связь: Одна тема -> Много задач
+  tasks     Task[]
+  results   Result[]
+}
+
+// 3. ЗАДАЧИ
+model Task {
+  id        String   @id @default(cuid())
+  contentRu String   // Текст вопроса RU
+  contentKz String   // Текст вопроса KZ
+  options   String[] // Варианты ответов ["A", "B", "C", "D"]
+  answer    String   // Правильный ответ
+  solution  String?  // Объяснение (может быть пустым)
+  difficulty Int     @default(1)
+
+  topicId   String
+  // Связь с темой + Каскадное удаление
+  topic     Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}
+// prisma/schema.prisma
+
+// ... (твои старые модели Subject, Topic, Task) ...
+
+model Result {
+  id        String   @id @default(cuid())
+  topicId   String
+  score     Int      // Сколько правильных ответов
+  total     Int      // Сколько всего было вопросов
+  createdAt DateTime @default(now())
+  
+  // Связь с темой (чтобы знать, по какой теме статистика)
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}

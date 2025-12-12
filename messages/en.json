@@ -1,0 +1,73 @@
+{
+  "Hero": {
+    "title": "Pass the UNT with",
+    "highlight": "maximum score",
+    "subtitle": "Interactive trainers, analysis of complex topics and instant verification. Study at your own pace.",
+    "button": "Choose subject",
+    "features": "UNT 2025 Preparation"
+  },
+  "Nav": {
+    "howItWorks": "How it works",
+    "subjects": "Subjects",
+    "login": "Sign In",
+    "admin": "Admin"
+  },
+  "Stats": {
+    "tasks": "Tasks",
+    "subjects": "Subjects",
+    "access": "Access 24/7",
+    "free": "Free"
+  },
+  "Steps": {
+    "title": "How to start?",
+    "subtitle": "Just 3 simple steps to success",
+    "step1": "Choose subject",
+    "desc1": "Find the subject you need from the list below.",
+    "step2": "Take tests",
+    "desc2": "Pass thematic tests. The system will show errors immediately.",
+    "step3": "Analyze errors",
+    "desc3": "Look at the correct solutions and memorize algorithms."
+  },
+  "Subjects": {
+    "title": "Choose a subject",
+    "subtitle": "And start preparing for the grant today",
+    "topics": "TOPICS",
+    "button": "Go to tests"
+  },"Trainer": {
+    "question": "QUESTION",
+    "checkButton": "Check Answer",
+    "nextButton": "Next Task",
+    "finishButton": "Finish",
+    "correctTitle": "Correct! Well done!",
+    "wrongTitle": "Wrong"
+  },
+  "Features": {
+    "title": "Why choose Uchis.KZ?",
+    "subtitle": "We made preparation as convenient as possible",
+    "f1_title": "Smart Analytics",
+    "f1_desc": "The system tracks your progress and shows weak points.",
+    "f2_title": "Mobile Access",
+    "f2_desc": "Solve tests on the bus, at home, or during breaks. The site is mobile-friendly.",
+    "f3_title": "Huge Database",
+    "f3_desc": "Thousands of relevant questions that actually appear on the UNT."
+  },
+  "Motivation": {
+    "title": "Don't put your dream off until tomorrow",
+    "subtitle": "Every solved test brings you closer to the grant. Start preparing right now!",
+    "button": "Start Test"
+  },
+  "FAQ": {
+    "title": "Frequency Asked Questions",
+    "q1": "Is it free?",
+    "a1": "Yes, basic access to tests is completely free.",
+    "q2": "Is registration required?",
+    "a2": "To save progress and see statistics — yes. It takes 10 seconds.",
+    "q3": "What if I found a mistake?",
+    "a3": "There are developer contacts at the bottom of the page. Write to us, and we will fix it quickly!"
+  },
+  "Developer": {
+    "text": "Need a similar website or app?",
+    "subtext": "I do turnkey web development. Landing pages, stores, platforms.",
+    "button": "Contact Developer"
+  }
+}
