@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { db } from "@/app/[locale]/lib/db";
+import { db } from "@/lib/db"; // ✅ ПРАВИЛЬНО
 
 interface ResultsPageProps {
   searchParams: Promise<{
