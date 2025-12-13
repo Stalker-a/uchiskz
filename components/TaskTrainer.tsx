@@ -3,22 +3,23 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MathText from "./MathText";
-import { CheckCircle, XCircle, ArrowRight, BarChart3, Trophy, Home } from "lucide-react"; // Импортируй иконки
+import { CheckCircle, XCircle, ArrowRight, BarChart3 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { finishTopic } from "@/app/actions/finishTopic"; // Наше новое действие
-// Импортируем график
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useRouter } from "next/navigation";
+import { updateScore } from "@/app/actions/updateScore"; // 👈 Добавил импорт
 
 interface Task {
   id: string;
-  topicId: string; // Важно: нам нужен ID темы
+  topicId: string;
   contentRu: string;
   contentKz: string;
   options: string[];
   answer: string;
   solution: string | null;
 }
+
+const TOTAL_QUESTIONS = 20; 
 
 export default function TaskTrainer({ 
   task, 
@@ -29,23 +30,17 @@ export default function TaskTrainer({
 }) {
   const locale = useLocale();
   const t = useTranslations('Trainer');
+  const router = useRouter(); // 👈 Инициализируем роутер
 
-  // --- СОСТОЯНИЯ ---
   const [selected, setSelected] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
-  const [showResultScreen, setShowResultScreen] = useState(false); // Показать график?
-  const [chartData, setChartData] = useState<any[]>([]); // Данные для графика
-  const [finalScore, setFinalScore] = useState(0); // Итоговый счет
 
-  // --- СЧЕТЧИК БАЛЛОВ (LocalStorage) ---
-  // При загрузке страницы проверяем, есть ли сохраненный счет для этой темы
   useEffect(() => {
     if (!task) return;
     const storageKey = `score_${task.topicId}`;
-    
-    // Если это первая задача в теме (можно определить по логике, но упростим)
-    // Мы просто читаем текущий счет. Если его нет — значит 0.
-    // А сбрасывать будем при выходе.
+    if (!localStorage.getItem(storageKey)) {
+        localStorage.setItem(storageKey, "0");
+    }
   }, [task]);
 
   if (!task) return <div className="p-10 text-center text-slate-500">Загрузка...</div>;
@@ -54,12 +49,10 @@ export default function TaskTrainer({
   const finalContent = questionText || task.contentRu;
   const isCorrect = selected === task.answer;
 
-  // --- ЛОГИКА ПРОВЕРКИ ---
   const handleCheck = () => {
     if (!selected) return;
     setIsChecked(true);
 
-    // Сохраняем балл в браузере
     const storageKey = `score_${task.topicId}`;
     const currentScore = parseInt(localStorage.getItem(storageKey) || "0");
     
@@ -68,75 +61,22 @@ export default function TaskTrainer({
     }
   };
 
-  // --- ЛОГИКА ЗАВЕРШЕНИЯ ---
+  // 👇 НОВАЯ ФУНКЦИЯ ЗАВЕРШЕНИЯ
+  // 👇 Измени функцию handleFinish вот так:
   const handleFinish = async () => {
-    // 1. Считываем итоговый счет
     const storageKey = `score_${task.topicId}`;
     const score = parseInt(localStorage.getItem(storageKey) || "0");
-    const totalQuestions = parseInt(localStorage.getItem(`total_${task.topicId}`) || "5"); // Можно передавать реальное кол-во
 
-    setFinalScore(score);
+    // 🔥 1. СОХРАНЯЕМ В БАЗУ (Ждем завершения)
+    // Нам не нужно передавать subjectId, новый updateScore найдет его сам!
+    await updateScore(score, TOTAL_QUESTIONS, task.topicId);
 
-    // 2. Отправляем на сервер и получаем данные для графика
-    // (Пока хардкодим 5 вопросов для примера, или можно посчитать)
-    const data = await finishTopic(task.topicId, score, 5); // 5 - условное число вопросов в тесте
-    setChartData(data);
-    
-    // 3. Показываем экран результатов
-    setShowResultScreen(true);
-    
-    // 4. Чистим память
     localStorage.removeItem(storageKey);
+
+    // 🔥 2. ПЕРЕХОДИМ НА СТРАНИЦУ (Где просто покажем результат)
+    router.push(`/results?correct=${score}&total=${TOTAL_QUESTIONS}&topicId=${task.topicId}`);
   };
 
-  // --- ЭКРАН РЕЗУЛЬТАТОВ (ГРАФИК) ---
-  if (showResultScreen) {
-    // Определяем мотивацию
-    let messageTitle = "";
-    let messageDesc = "";
-    if (finalScore === 5) { messageTitle = "Легенда! 🏆"; messageDesc = "Ты уничтожил этот тест. Идеально!"; }
-    else if (finalScore >= 3) { messageTitle = "Хорошая работа! 👍"; messageDesc = "Ты выше среднего, но можно еще лучше."; }
-    else { messageTitle = "Не сдавайся! 💪"; messageDesc = "Ошибки делают нас сильнее. Попробуй еще раз!"; }
-
-    return (
-      <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100 p-8 md:p-12 text-center">
-         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 text-blue-600 rounded-full mb-6">
-              <Trophy className="w-10 h-10" />
-            </div>
-            
-            <h2 className="text-3xl md:text-4xl font-bold mb-2 text-slate-800">{messageTitle}</h2>
-            <p className="text-slate-500 mb-8 text-lg">{messageDesc}</p>
-
-            <div className="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100">
-              <div className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Твой результат</div>
-              <div className="text-5xl font-extrabold text-blue-600 mb-2">{finalScore} / 5</div>
-            </div>
-
-            {/* ГРАФИК */}
-            <div className="h-64 w-full mb-8">
-               <p className="text-xs text-slate-400 mb-2 text-left">Как отвечали другие ученики:</p>
-               <ResponsiveContainer width="100%" height="100%">
-                 <BarChart data={chartData}>
-                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                   <Tooltip 
-                      cursor={{fill: '#f1f5f9'}}
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                   />
-                   <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
-                 </BarChart>
-               </ResponsiveContainer>
-            </div>
-
-            <Link href="/#subjects" className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-800 transition">
-              <Home className="w-5 h-5" /> Вернуться к предметам
-            </Link>
-         </motion.div>
-      </div>
-    );
-  }
-
-  // --- ОБЫЧНЫЙ ЭКРАН ВОПРОСА ---
   return (
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden mb-8">
@@ -144,7 +84,6 @@ export default function TaskTrainer({
           <span className="text-slate-500 font-bold tracking-wider text-sm">
             {t('question')}
           </span>
-          {/* Сброс прогресса, если нужно */}
         </div>
         
         <div className="p-8 md:p-12">
@@ -220,14 +159,13 @@ export default function TaskTrainer({
           </button>
         ) : (
           nextTaskId ? (
-             <a 
-               href={`/tasks/${nextTaskId}`} 
-               className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-1 transition"
-             >
-               {t('nextButton')} <ArrowRight className="w-5 h-5" />
-             </a>
+            <Link 
+              href={`/tasks/${nextTaskId}`} 
+              className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-1 transition"
+            >
+              {t('nextButton')} <ArrowRight className="w-5 h-5" />
+            </Link>
           ) : (
-            // 👇 КНОПКА ТЕПЕРЬ ЗАПУСКАЕТ ЭКРАН РЕЗУЛЬТАТОВ
             <button 
                onClick={handleFinish}
                className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-1 transition"

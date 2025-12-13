@@ -1,127 +1,135 @@
 import { db } from "@/lib/db";
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Calculator, PlayCircle } from "lucide-react"; // Добавил иконки для красоты
-
-// Отключаем кэш, чтобы новые темы появлялись сразу
-export const dynamic = "force-dynamic";
+import { ArrowLeft, CheckCircle, PlayCircle } from "lucide-react";
+import { auth } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 
 interface SubjectPageProps {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }
 
 export default async function SubjectPage({ params }: SubjectPageProps) {
   const { slug } = await params;
+  const { userId } = await auth(); // Получаем ID пользователя
 
-  // 1. Ищем предмет в базе по его slug (например, "physics")
+  // 1. Ищем предмет и его темы
   const subject = await db.subject.findUnique({
-    where: { slug: slug },
+    where: { slug },
     include: {
       topics: {
-        orderBy: { id: 'asc' }, // Сортируем темы по порядку создания
-        include: { 
-          tasks: {
-            // 🔥 ВАЖНО: Сортируем задачи по ID (от старых к новым)
-            // Это гарантирует, что tasks[0] - это действительно первая задача
-            orderBy: { id: 'asc' },
-            select: { id: true } // Нам нужен только ID для ссылки
-          } 
-        }, 
+        orderBy: { id: "asc" }
       }
-    },
+    }
   });
 
-  // Если такого предмета нет в базе -> ошибка 404
   if (!subject) return notFound();
 
+  // 2. 🔥 Получаем статистику пользователя по темам этого предмета
+  let userStats: Record<string, { score: number; total: number }> = {};
+
+  if (userId) {
+    const stats = await db.topicStat.findMany({
+      where: {
+        userId: userId,
+        topicId: { in: subject.topics.map(t => t.id) } // Берем стату только для тем этого предмета
+      }
+    });
+
+    // Превращаем массив в удобный объект: { "id_темы": {score: 5, total: 10}, ... }
+    stats.forEach(s => {
+      userStats[s.topicId] = { score: s.score, total: s.total };
+    });
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 p-6 font-sans text-slate-900">
       
-      {/* Шапка предмета */}
-      <div className="bg-white border-b border-slate-200 py-10 px-6 mb-8 shadow-sm">
-        <div className="max-w-4xl mx-auto">
-            <Link 
-              href="/" 
-              className="inline-flex items-center text-sm text-slate-500 hover:text-blue-600 mb-6 transition group"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition" /> 
-              На главную
-            </Link>
-            
-            <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                <BookOpen className="w-8 h-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900">{subject.titleRu}</h1>
-                <p className="text-slate-500 font-medium">{subject.titleKz}</p>
-              </div>
-            </div>
-        </div>
+      {/* Кнопка назад */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <Link href="/#subjects" className="inline-flex items-center text-slate-500 hover:text-blue-600 font-bold transition">
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Назад к предметам
+        </Link>
+      </div>
+
+      {/* Заголовок предмета */}
+      <div className="max-w-4xl mx-auto mb-10 text-center">
+        <h1 className="text-4xl font-extrabold text-slate-900 mb-4 uppercase tracking-wide">
+          {subject.titleRu}
+        </h1>
+        <p className="text-slate-500">Выберите тему для тренировки</p>
       </div>
 
       {/* Список тем */}
-      <div className="max-w-4xl mx-auto px-6 pb-20">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-800">Темы курса</h2>
-          <span className="text-sm font-bold bg-slate-200 text-slate-600 px-3 py-1 rounded-full">
-            {subject.topics.length} тем
-          </span>
-        </div>
-        
-        <div className="space-y-4">
-          {subject.topics.map((topic, index) => (
-            <div 
-              key={topic.id} 
-              className="group bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-300"
-            >
-               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold text-sm">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition">
-                        {topic.titleRu}
-                      </h3>
-                      <p className="text-sm text-slate-500 mb-2">{topic.titleKz}</p>
-                      
-                      <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded">
-                        <Calculator className="w-3 h-3" />
-                        Задач: {topic.tasks.length}
-                      </div>
-                    </div>
-                  </div>
+      <div className="max-w-3xl mx-auto space-y-4">
+        {subject.topics.map((topic) => {
+          // Проверяем, есть ли результат в нашем объекте userStats
+          const stat = userStats[topic.id];
+          const isPassed = !!stat; // Если запись есть — значит true (пройдено)
 
-                  {/* Кнопка действия */}
-                  <div className="flex-shrink-0">
-                    {topic.tasks.length > 0 ? (
-                      <Link 
-                        href={`/tasks/${topic.tasks[0].id}`} // Ведем на САМУЮ ПЕРВУЮ задачу (благодаря orderBy)
-                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                      >
-                        <PlayCircle className="w-5 h-5" />
-                        Начать тест
-                      </Link>
-                    ) : (
-                      <button disabled className="bg-slate-100 text-slate-400 px-6 py-3 rounded-lg font-bold cursor-not-allowed border border-slate-200">
-                        Скоро будет
-                      </button>
+          return (
+            <Link 
+              key={topic.id} 
+              // Ссылка ведет на промежуточную страницу, которая найдет первую задачу
+              href={`/tasks/topic/${topic.id}`} 
+              className={`group block p-6 rounded-2xl border-2 transition-all duration-200 relative overflow-hidden ${
+                isPassed 
+                  ? "bg-green-50 border-green-200 hover:border-green-400" // 🟢 ЗЕЛЕНЫЙ ЦВЕТ
+                  : "bg-white border-slate-200 hover:border-blue-400 hover:shadow-lg"
+              }`}
+            >
+              <div className="flex justify-between items-center relative z-10">
+                <div className="flex items-center gap-4">
+                  {/* Иконка: Галочка или Play */}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    isPassed 
+                      ? "bg-green-200 text-green-700" 
+                      : "bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition"
+                  }`}>
+                    {isPassed ? <CheckCircle className="w-6 h-6" /> : <PlayCircle className="w-6 h-6" />}
+                  </div>
+                  
+                  {/* Название темы */}
+                  <div>
+                    <h3 className={`text-lg font-bold ${isPassed ? "text-green-900" : "text-slate-800"}`}>
+                      {topic.titleRu}
+                    </h3>
+                    {isPassed && (
+                      <div className="text-xs font-bold text-green-600 uppercase tracking-wider mt-1">
+                        Пройдено
+                      </div>
                     )}
                   </div>
-               </div>
-            </div>
-          ))}
+                </div>
 
-          {subject.topics.length === 0 && (
-             <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200">
-               <p className="text-slate-400 font-medium">В этом предмете пока нет тем.</p>
-             </div>
-          )}
-        </div>
+                {/* 🔥 БАЛЛЫ (Показываем только если пройдено) */}
+                {isPassed && (
+                  <div className="text-right">
+                    <div className="text-2xl font-black text-green-600">
+                      {stat.score}
+                      <span className="text-sm text-green-400 font-medium">/{stat.total}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Стрелочка (Показываем только если НЕ пройдено) */}
+                {!isPassed && (
+                  <div className="opacity-0 group-hover:opacity-100 transition text-blue-500 transform group-hover:translate-x-1">
+                      <ArrowLeft className="w-6 h-6 rotate-180" />
+                  </div>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+
+        {subject.topics.length === 0 && (
+          <div className="text-center py-10 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-300">
+            В этом предмете пока нет тем. Скоро добавим! 🏗️
+          </div>
+        )}
       </div>
+
     </div>
   );
 }

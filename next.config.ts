@@ -1,10 +1,18 @@
 import createNextIntlPlugin from 'next-intl/plugin';
+import type { NextConfig } from 'next';
 
 const withNextIntl = createNextIntlPlugin();
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Сюда можно добавлять другие настройки Next.js, если понадобятся
+const nextConfig: NextConfig = {
+  // 👇 Разрешаем картинки с Clerk
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+      },
+    ],
+  },
 };
 
 export default withNextIntl(nextConfig);

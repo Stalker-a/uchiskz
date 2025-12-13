@@ -6,6 +6,8 @@ import { biologyData } from "./seeds/biology";
 import { historyData } from "./seeds/history";
 import { mathData } from "./seeds/math"; 
 import { physicsData } from "./seeds/physics"; 
+import { informaticsData } from "./seeds/informatics";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -25,7 +27,8 @@ async function main() {
     biologyData,
     historyData,
     mathData,
-    physicsData
+    physicsData,
+    informaticsData
   ];
 
   for (const data of allSubjectsData) {

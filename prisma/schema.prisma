@@ -1,67 +1,124 @@
 // prisma/schema.prisma
 
+// 1. НАСТРОЙКИ ГЕНЕРАТОРА И БАЗЫ ДАННЫХ
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql" // Или "sqlite", если ты используешь локальный файл
+  provider = "postgresql" // Используй "postgresql" для Supabase/Neon или "sqlite" для локальной разработки
   url      = env("DATABASE_URL")
 }
 
-// 1. ПРЕДМЕТЫ (Математика, Физика...)
+// ==========================================
+// БЛОК 1: ОБРАЗОВАТЕЛЬНЫЙ КОНТЕНТ
+// ==========================================
+
+// Предмет (Математика, Физика, Химия...)
 model Subject {
   id        String   @id @default(cuid())
-  slug      String   @unique // Ссылка, например "math"
+  slug      String   @unique // Ссылка для URL, например "math"
   titleRu   String
   titleKz   String
   
-  // Связь: Один предмет -> Много тем
-  // onDelete: Cascade означает: удалишь Предмет -> удалятся все Темы
-  topics    Topic[] 
+  // Связи
+  topics       Topic[]       // У предмета много тем
+  subjectStats SubjectStat[] // Статистика пользователей по этому предмету
 }
 
-// 2. ТЕМЫ (Квадратные уравнения, Динамика...)
+// Тема (Квадратные уравнения, Механика...)
 model Topic {
   id        String   @id @default(cuid())
   titleRu   String
   titleKz   String
-  grade     Int      @default(11) // Класс
+  grade     Int      @default(11) // Класс (1-11)
 
+  // Связь с Предметом
   subjectId String
-  // Связь с предметом + Каскадное удаление
-  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   
-  // Связь: Одна тема -> Много задач
-  tasks     Task[]
-  results   Result[]
+  // Связи
+  tasks     Task[]   // В теме много задач
+  results   Result[] 
+  topicStats TopicStat[]// Результаты тестов по этой теме
 }
 
-// 3. ЗАДАЧИ
+// Задача (Вопрос теста)
 model Task {
-  id        String   @id @default(cuid())
-  contentRu String   // Текст вопроса RU
-  contentKz String   // Текст вопроса KZ
-  options   String[] // Варианты ответов ["A", "B", "C", "D"]
-  answer    String   // Правильный ответ
-  solution  String?  // Объяснение (может быть пустым)
-  difficulty Int     @default(1)
+  id         String   @id @default(cuid())
+  contentRu  String   // Текст вопроса RU
+  contentKz  String   // Текст вопроса KZ
+  options    String[] // Массив вариантов ["Ответ 1", "Ответ 2", "Ответ 3", "Ответ 4"]
+  answer     String   // Правильный ответ (строка, совпадающая с одним из options)
+  solution   String?  // Объяснение решения (необязательно)
+  difficulty Int      @default(1) // Сложность (1-3)
 
-  topicId   String
-  // Связь с темой + Каскадное удаление
-  topic     Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  // Связь с Темой
+  topicId    String
+  topic      Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 }
-// prisma/schema.prisma
 
-// ... (твои старые модели Subject, Topic, Task) ...
+// ==========================================
+// БЛОК 2: ПОЛЬЗОВАТЕЛЬСКИЕ ДАННЫЕ И СТАТИСТИКА
+// ==========================================
 
+// Результат конкретного прохождения теста пользователем
 model Result {
   id        String   @id @default(cuid())
-  topicId   String
-  score     Int      // Сколько правильных ответов
-  total     Int      // Сколько всего было вопросов
-  createdAt DateTime @default(now())
   
-  // Связь с темой (чтобы знать, по какой теме статистика)
+  // Кто прошел (ID из Clerk/Auth)
+  userId    String   
+  
+  // Что прошел
+  topicId   String
   topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  // Результаты
+  score     Int      // Количество правильных ответов
+  total     Int      // Всего вопросов в тесте
+  createdAt DateTime @default(now()) // Когда прошел
+
+  // Индекс для ускорения поиска истории пользователя
+  @@index([userId])
+}
+
+// Общая статистика пользователя (Глобальный рейтинг)
+model UserStat {
+  id        String   @id @default(cuid())
+  userId    String   @unique // ID из Clerk (один юзер - одна запись статистики)
+  name      String?  // Имя/Email (кешируем, чтобы не дергать Clerk для рейтинга)
+  
+  score     Int      @default(0) // Общий опыт (XP) за все предметы
+  tests     Int      @default(0) // Общее количество пройденных тестов
+  
+  updatedAt DateTime @updatedAt
+}
+
+// Статистика пользователя по конкретному предмету (Рейтинг внутри предмета)
+model SubjectStat {
+  id        String   @id @default(cuid())
+  
+  userId    String
+  name      String?  // Имя для отображения в рейтинге предмета
+  
+  // Связь с предметом
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  score     Int      @default(0) // Опыт (XP) только по этому предмету
+
+  // Уникальность: у одного юзера может быть только одна статистика по конкретному предмету
+  @@unique([userId, subjectId])
+}
+model TopicStat {
+  id        String   @id @default(uuid())
+  userId    String
+  topicId   String
+  score     Int      // Сколько набрал (правильных)
+  total     Int      // Из скольки вопросов всего
+  passed    Boolean  @default(true) // Прошел или нет
+
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
 }

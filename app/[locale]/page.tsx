@@ -4,11 +4,12 @@ import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
+// 👇 1. Добавили Trophy в список иконок
 import { 
   BookOpen, Calculator, FlaskConical, Globe, Zap, Dna, 
   Languages, Cpu, Landmark, GraduationCap, ArrowRight, 
   CheckCircle, Layout, Smartphone, BarChart3,
-  Code, Send, Rocket
+  Code, Send, Rocket, Trophy 
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function Home({
   const tSteps = await getTranslations('Steps');
   const tSub = await getTranslations('Subjects');
   const tFeat = await getTranslations('Features');
-  const tMotiv = await getTranslations('Motivation'); // Новый блок
+  const tMotiv = await getTranslations('Motivation');
   const tFAQ = await getTranslations('FAQ');
   const tDev = await getTranslations('Developer');
 
@@ -82,6 +83,9 @@ export default async function Home({
 
             <SignedIn>
               <div className="flex items-center gap-4">
+                <Link href="/profile" className="text-slate-500 hover:text-blue-600 font-bold">
+                   Профиль
+                </Link>
                  <Link href="/admin" className="text-slate-500 hover:text-blue-600">
                     {tNav('admin')}
                  </Link>
@@ -106,11 +110,23 @@ export default async function Home({
           <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
             {tHero('subtitle')}
           </p>
-          <div className="flex justify-center gap-4">
-            <Link href="#subjects" className="flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 hover:shadow-lg transition transform hover:-translate-y-1">
+          
+          {/* 👇 2. ИЗМЕНЕННЫЙ БЛОК КНОПОК */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link href="#subjects" className="flex justify-center items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 hover:shadow-lg transition transform hover:-translate-y-1">
               {tHero('button')} <ArrowRight className="w-5 h-5" />
             </Link>
+
+            {/* Кнопка Рейтинга */}
+            <Link 
+              href="/leaderboard" 
+              className="flex justify-center items-center gap-2 bg-yellow-400 text-yellow-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 transition shadow-lg transform hover:-translate-y-1"
+            >
+              <Trophy className="w-6 h-6" />
+              Рейтинг
+            </Link>
           </div>
+
         </div>
       </section>
 
@@ -211,7 +227,7 @@ export default async function Home({
         </div>
       </section>
 
-      {/* --- МОТИВАЦИЯ (ВМЕСТО ОТЗЫВОВ) --- */}
+      {/* --- МОТИВАЦИЯ --- */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10">
             <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full blur-3xl"></div>
@@ -265,9 +281,8 @@ export default async function Home({
         </div>
       </section>
 
-      {/* --- ДЛЯ РАЗРАБОТЧИКА (ТВОЙ БЛОК) --- */}
+      {/* --- ДЛЯ РАЗРАБОТЧИКА --- */}
       <section className="bg-slate-900 py-16 text-white relative overflow-hidden">
-        {/* Декоративный фон */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20 translate-x-1/2 -translate-y-1/2"></div>
         
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
@@ -281,7 +296,7 @@ export default async function Home({
             {tDev('subtext')}
           </p>
           <a 
-            href="https://t.me/SHAKOTAN2" // ⚠️ ЗАМЕНИ НА СВОЙ TELEGRAM
+            href="https://t.me/SHAKOTAN2" 
             target="_blank"
             className="inline-flex items-center gap-2 bg-white text-slate-900 px-8 py-4 rounded-xl font-bold hover:bg-blue-50 transition"
           >

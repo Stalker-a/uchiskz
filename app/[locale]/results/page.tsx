@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { db } from "@/lib/db"; // ✅ ПРАВИЛЬНО
+import { db } from "@/lib/db";
+// ❌ Импорт updateScore УБРАН, так как сохранение теперь происходит в TaskTrainer при клике
 
 interface ResultsPageProps {
   searchParams: Promise<{
@@ -11,20 +11,25 @@ interface ResultsPageProps {
 }
 
 export default async function ResultsPage({ searchParams }: ResultsPageProps) {
-  // Достаем цифры из ссылки (например, /results?correct=8&total=10)
   const { correct, total, topicId } = await searchParams;
 
   const score = Number(correct) || 0;
   const questions = Number(total) || 0;
-  
-  // Защита от деления на ноль
   const percentage = questions > 0 ? Math.round((score / questions) * 100) : 0;
 
-  // Найдем название темы, чтобы было красиво
-  // ✅ ПРАВИЛЬНО (без parseInt)
-const topic = topicId ? await db.topic.findUnique({ where: { id: topicId } }) : null;
+  // 1. Получаем название темы (только для отображения текста "Тема: ...")
+  const topic = topicId 
+    ? await db.topic.findUnique({ 
+        where: { id: topicId } 
+      }) 
+    : null;
 
-  // Оценка смайликом
+  // 2. Ищем первую задачу (для кнопки "Пройти заново")
+  const firstTask = topicId 
+    ? await db.task.findFirst({ where: { topicId: topicId } }) 
+    : null;
+
+  // 3. Выбираем эмодзи и текст
   let emoji = "🤔";
   let title = "Неплохо!";
   let color = "text-yellow-600";
@@ -37,15 +42,16 @@ const topic = topicId ? await db.topic.findUnique({ where: { id: topicId } }) : 
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden text-center p-8 border border-slate-200">
         
-        {/* Смайлик */}
+        {/* Эмодзи */}
         <div className="text-8xl mb-6 animate-bounce">{emoji}</div>
         
+        {/* Заголовок */}
         <h1 className={`text-3xl font-extrabold mb-2 ${color}`}>{title}</h1>
         <p className="text-slate-500 mb-8">
             Тема: {topic?.titleRu || "Тренировка"}
         </p>
 
-        {/* Карточка со счетом */}
+        {/* Карточка результата */}
         <div className="bg-slate-100 rounded-2xl p-6 mb-8">
           <div className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-2">Твой результат</div>
           <div className="text-5xl font-black text-slate-900">
@@ -64,9 +70,10 @@ const topic = topicId ? await db.topic.findUnique({ where: { id: topicId } }) : 
           >
             Вернуться к предметам
           </Link>
-          {topicId && (
+          
+          {firstTask && (
             <Link 
-               href={`/tasks/${await db.task.findFirst({ where: { topicId: topicId } }).then(t => t?.id)}`}
+               href={`/tasks/${firstTask.id}`}
                className="block w-full bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 transition"
             >
               Пройти заново 🔄
