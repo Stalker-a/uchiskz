@@ -7,6 +7,7 @@ import { ruRU } from "@clerk/localizations";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import Script from "next/script"; // ✅ Импорт есть, отлично
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,10 +21,8 @@ export default async function RootLayout({
   params
 }: {
   children: React.ReactNode;
-  // 👇 ВОТ ЭТО МЫ ДОБАВЛЯЕМ (ОБЯЗАТЕЛЬНО ДЛЯ Next.js 15)
   params: Promise<{ locale: string }>; 
 }) {
-  // 👇 И ВОТ ЭТО ТОЖЕ (ЖДЕМ ЗАГРУЗКИ ЯЗЫКА)
   const { locale } = await params;
 
   // Проверка: если язык странный — ошибка 404
@@ -39,6 +38,15 @@ export default async function RootLayout({
       {/* Указываем язык сайта */}
       <html lang={locale}>
         <body className={inter.className}>
+          
+          {/* 👇 1. ВОТ СЮДА ВСТАВЛЯЕМ РЕКЛАМУ (ВНУТРЬ BODY) */}
+          <Script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6241200265313280"
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+
           {/* Подключаем переводчик ко всем страницам внутри */}
           <NextIntlClientProvider messages={messages}>
             {children}
