@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, ArrowRight, BarChart3 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { updateScore } from "@/app/actions/updateScore"; // 👈 Добавил импорт
+import { updateScore } from "@/app/actions/updateScore"; 
 
 interface Task {
   id: string;
@@ -19,6 +19,7 @@ interface Task {
   solution: string | null;
 }
 
+// ⚠️ Убедись, что вопросов в базе реально 20. Если меньше — поставь правильное число.
 const TOTAL_QUESTIONS = 20; 
 
 export default function TaskTrainer({ 
@@ -30,15 +31,19 @@ export default function TaskTrainer({
 }) {
   const locale = useLocale();
   const t = useTranslations('Trainer');
-  const router = useRouter(); // 👈 Инициализируем роутер
+  const router = useRouter();
 
   const [selected, setSelected] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
 
+  // 🔥 ИСПРАВЛЕНИЕ 1: При старте проверяем, не сломан ли счетчик
   useEffect(() => {
     if (!task) return;
     const storageKey = `score_${task.topicId}`;
-    if (!localStorage.getItem(storageKey)) {
+    
+    const currentVal = localStorage.getItem(storageKey);
+    // Если там пусто или "NaN" (ошибка), сбрасываем в 0
+    if (currentVal === null || isNaN(Number(currentVal))) {
         localStorage.setItem(storageKey, "0");
     }
   }, [task]);
@@ -54,26 +59,33 @@ export default function TaskTrainer({
     setIsChecked(true);
 
     const storageKey = `score_${task.topicId}`;
-    const currentScore = parseInt(localStorage.getItem(storageKey) || "0");
+    
+    // 🔥 ИСПРАВЛЕНИЕ 2: Безопасное чтение счета
+    let currentScore = Number(localStorage.getItem(storageKey));
+    if (isNaN(currentScore)) currentScore = 0; // Если ошибка — ставим 0
     
     if (isCorrect) {
-      localStorage.setItem(storageKey, (currentScore + 1).toString());
+      const newScore = currentScore + 1;
+      localStorage.setItem(storageKey, newScore.toString());
+      console.log(`✅ Правильно! Текущий счет: ${newScore}`);
+    } else {
+      console.log(`❌ Неверно. Счет остался: ${currentScore}`);
     }
   };
 
-  // 👇 НОВАЯ ФУНКЦИЯ ЗАВЕРШЕНИЯ
-  // 👇 Измени функцию handleFinish вот так:
   const handleFinish = async () => {
     const storageKey = `score_${task.topicId}`;
-    const score = parseInt(localStorage.getItem(storageKey) || "0");
+    
+    // 🔥 ИСПРАВЛЕНИЕ 3: Безопасное получение итога
+    let score = Number(localStorage.getItem(storageKey));
+    if (isNaN(score)) score = 0;
 
-    // 🔥 1. СОХРАНЯЕМ В БАЗУ (Ждем завершения)
-    // Нам не нужно передавать subjectId, новый updateScore найдет его сам!
-    await updateScore(score, TOTAL_QUESTIONS, task.topicId);
+    console.log(`🏁 ФИНИШ! Отправляем результат: ${score}`);
 
     localStorage.removeItem(storageKey);
 
-    // 🔥 2. ПЕРЕХОДИМ НА СТРАНИЦУ (Где просто покажем результат)
+    await updateScore(score, TOTAL_QUESTIONS, task.topicId);
+
     router.push(`/results?correct=${score}&total=${TOTAL_QUESTIONS}&topicId=${task.topicId}`);
   };
 
