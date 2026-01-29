@@ -10,7 +10,9 @@
     "howItWorks": "Как это работает",
     "subjects": "Предметы",
     "login": "Войти",
-    "admin": "Админка"
+    "admin": "Админка",
+    "profile": "Профиль",
+    "leaderboard": "Рейтинг"
   },
   "Stats": {
     "tasks": "Задач в базе",

@@ -10,7 +10,9 @@
     "howItWorks": "How it works",
     "subjects": "Subjects",
     "login": "Sign In",
-    "admin": "Admin"
+    "admin": "Admin",
+    "profile": "Profile",
+    "leaderboard": "Leaderboard"
   },
   "Stats": {
     "tasks": "Tasks",
