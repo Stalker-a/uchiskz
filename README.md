@@ -20,6 +20,32 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Configuration
+
+1. Create a local environment file and fill in the required values:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Set the following variables in `.env`:
+
+   - `DATABASE_URL` — connection string for the Prisma database.
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — Clerk publishable key for the client.
+   - `CLERK_SECRET_KEY` — Clerk secret key for server-side API calls.
+
+3. Generate the Prisma client:
+
+   ```bash
+   npx prisma generate
+   ```
+
+4. Apply migrations (for local development):
+
+   ```bash
+   npx prisma migrate dev
+   ```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
