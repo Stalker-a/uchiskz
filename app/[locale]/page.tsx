@@ -64,7 +64,7 @@ export default async function Home({
         <div className="max-w-6xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <GraduationCap className="w-8 h-8 text-blue-600" />
-            <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+            <Link href={`/${locale}`} className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
               Uchis.KZ
             </Link>
           </div>
@@ -83,10 +83,10 @@ export default async function Home({
 
             <SignedIn>
               <div className="flex items-center gap-4">
-                <Link href="/profile" className="text-slate-500 hover:text-blue-600 font-bold">
+                <Link href={`/${locale}/profile`} className="text-slate-500 hover:text-blue-600 font-bold">
                    Профиль
                 </Link>
-                 <Link href="/admin" className="text-slate-500 hover:text-blue-600">
+                 <Link href={`/${locale}/admin`} className="text-slate-500 hover:text-blue-600">
                     {tNav('admin')}
                  </Link>
                  <UserButton afterSignOutUrl="/" />
@@ -119,7 +119,7 @@ export default async function Home({
 
             {/* Кнопка Рейтинга */}
             <Link 
-              href="/leaderboard" 
+              href={`/${locale}/leaderboard`} 
               className="flex justify-center items-center gap-2 bg-yellow-400 text-yellow-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 transition shadow-lg transform hover:-translate-y-1"
             >
               <Trophy className="w-6 h-6" />
