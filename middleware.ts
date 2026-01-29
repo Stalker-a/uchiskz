@@ -10,12 +10,22 @@ const intlMiddleware = createMiddleware({
 
 // 2. Защита админки
 const isProtectedRoute = createRouteMatcher(['/:locale/admin(.*)']);
-const MY_ADMIN_ID = "твои_id_если_нужен"; 
 
 export default clerkMiddleware(async (auth, req) => {
   // Если это админка - проверяем права
   if (isProtectedRoute(req)) {
     await auth.protect();
+    const { userId, sessionClaims } = auth();
+    const isAdmin =
+      sessionClaims?.publicMetadata?.role === "admin" ||
+      sessionClaims?.role === "admin" ||
+      sessionClaims?.orgRole === "admin" ||
+      sessionClaims?.orgRole === "owner" ||
+      userId === process.env.CLERK_ADMIN_USER_ID;
+
+    if (!isAdmin) {
+      return new Response("Forbidden", { status: 403 });
+    }
   }
 
   // Для всех остальных случаев запускаем переводчик
