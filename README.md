@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UchiKZ
 
-## Getting Started
+Образовательная платформа на Next.js с личными кабинетами, прогрессом обучения и многоязычным интерфейсом. Проект нацелен на удобное прохождение тем и отслеживание результатов.
 
-First, run the development server:
+## Ключевые фичи
+
+- Аутентификация и управление сессиями через Clerk.
+- Работа с базой данных через Prisma.
+- Локализация интерфейса на базе next-intl.
+- Каталог предметов и тем, страницы заданий/результатов.
+- Профиль пользователя, таблица лидеров и административный раздел.
+
+## Используемые сервисы
+
+- **Clerk** — аутентификация и управление пользователями.
+- **Prisma** — ORM и миграции базы данных.
+- **next-intl** — локализация интерфейса.
+
+## Требования
+
+- Node.js 18+ (рекомендуется LTS).
+- npm 9+ (или совместимый менеджер пакетов).
+- PostgreSQL (или другой поддерживаемый Prisma драйвер с корректным `DATABASE_URL`).
+
+## Переменные окружения
+
+Создайте файл `.env` в корне проекта и заполните ключи:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# База данных
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DB_NAME"
+
+# Clerk
+CLERK_PUBLISHABLE_KEY="pk_..."
+CLERK_SECRET_KEY="sk_..."
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> При необходимости можно добавить дополнительные переменные Clerk (например, URL переадресации) в соответствии с вашей конфигурацией.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Инициализация базы/seed
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Сгенерировать Prisma client
+npx prisma generate
 
-## Learn More
+# Применить миграции
+npx prisma migrate dev
 
-To learn more about Next.js, take a look at the following resources:
+# Заполнить тестовыми данными
+npx prisma db seed
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Запуск/сборка
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Локальный старт (development)
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Откройте [http://localhost:3000](http://localhost:3000).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Production сборка и запуск
+
+```bash
+npm install
+npm run build
+npm run start
+```
+
+## Деплой
+
+1. Настройте переменные окружения в среде деплоя (как минимум `DATABASE_URL`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`).
+2. Установите зависимости: `npm install`.
+3. Соберите проект: `npm run build`.
+4. Запустите сервер: `npm run start`.
+
+Если вы используете Vercel или другую платформу, перенесите те же команды в соответствующие шаги CI/CD.
