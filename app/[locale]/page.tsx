@@ -84,7 +84,7 @@ export default async function Home({
             <SignedIn>
               <div className="flex items-center gap-4">
                 <Link href="/profile" className="text-slate-500 hover:text-blue-600 font-bold">
-                   Профиль
+                   {tNav('profile')}
                 </Link>
                  <Link href="/admin" className="text-slate-500 hover:text-blue-600">
                     {tNav('admin')}
@@ -123,7 +123,7 @@ export default async function Home({
               className="flex justify-center items-center gap-2 bg-yellow-400 text-yellow-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 transition shadow-lg transform hover:-translate-y-1"
             >
               <Trophy className="w-6 h-6" />
-              Рейтинг
+              {tNav('leaderboard')}
             </Link>
           </div>
 

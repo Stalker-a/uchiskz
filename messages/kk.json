@@ -10,7 +10,9 @@
     "howItWorks": "Қалай жұмыс істейді",
     "subjects": "Пәндер",
     "login": "Кіру",
-    "admin": "Админ"
+    "admin": "Админ",
+    "profile": "Профиль",
+    "leaderboard": "Рейтинг"
   },
   "Stats": {
     "tasks": "Тапсырма",
