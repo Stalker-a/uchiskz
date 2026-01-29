@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import createMiddleware from "next-intl/middleware";
+import { NextResponse } from "next/server";
 
 // 1. Настройки локализации
 const intlMiddleware = createMiddleware({
@@ -10,12 +11,22 @@ const intlMiddleware = createMiddleware({
 
 // 2. Защита админки
 const isProtectedRoute = createRouteMatcher(['/:locale/admin(.*)']);
-const MY_ADMIN_ID = "твои_id_если_нужен"; 
+const adminUserIds = (process.env.ADMIN_USER_IDS ?? "")
+  .split(",")
+  .map((id) => id.trim())
+  .filter(Boolean);
 
 export default clerkMiddleware(async (auth, req) => {
   // Если это админка - проверяем права
   if (isProtectedRoute(req)) {
-    await auth.protect();
+    const { userId } = auth();
+    if (!userId) {
+      await auth.protect();
+    }
+
+    if (!userId || !adminUserIds.includes(userId)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
   }
 
   // Для всех остальных случаев запускаем переводчик
